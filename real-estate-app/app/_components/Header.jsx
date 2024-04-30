@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { UserButton, useUser } from "@clerk/clerk-react";
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +9,7 @@ import React, { useEffect } from "react";
 
 function Header() {
   const path = usePathname();
-
+  const { user, isSignedIn } = useUser();
   useEffect(() => {
     console.log(path);
   }, []);
@@ -33,12 +34,18 @@ function Header() {
           </li>
         </ul>
       </div>
-      <div className="flex gap-2">
-        <Button className="flex gap-2">
+      <div className="flex gap-2 items-center">
+        <Button className="flex gap-2 items-center">
           <Plus className="h-5 w-5" />
-          Post Your ADD
+          Post Your AD
         </Button>
-        <Button variant="outline">Login</Button>
+        {isSignedIn ? (
+          <UserButton />
+        ) : (
+          <Link href={"/sign-in"}>
+            <Button variant="outline">Login</Button>
+          </Link>
+        )}
       </div>
     </div>
   );
