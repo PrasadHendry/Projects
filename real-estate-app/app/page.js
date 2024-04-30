@@ -5,10 +5,6 @@ export default function Home() {
   return (
 
     <div>
-      None!<br></br>
-
-
-      <Button>NOne</Button>
     </div>
 
   );
