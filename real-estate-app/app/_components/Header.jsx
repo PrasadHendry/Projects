@@ -20,7 +20,7 @@ function Header() {
         <ul className="hidden md:flex gap-10">
           <li
             className={`hover:text-primary font-medium text-sm cursor-pointer ${
-              path === "/" && "text-primary"
+              path == "/" && "text-primary"
             }`}
           >
             <Link href="/">For Sale</Link>
