@@ -12,9 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Formik } from "formik";
-import { type } from "os";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
+import { supabase } from "@/Utils/supabase/client";
+import { Toaster, toast } from "sonner";
 
 function EditListing() {
   const params = usePathname();
@@ -22,7 +23,22 @@ function EditListing() {
     console.log(params.split("/")[2]);
   }, []);
 
-  const onSubmitHandler = (formValue) => {};
+  const onSubmitHandler = async (formValue) => {
+    const { data, error } = await supabase
+      .from("listing")
+      .update(formValue)
+      .eq("id", params.split("/")[2])
+      .select();
+
+    if (data) {
+      console.log(data);
+      toast("Listing Updated and Published");
+    } else if (error) {
+      console.error(error);
+      toast("Error occurred while updating listing");
+    }
+  };
+
   return (
     <div className="px-10 md:px-36 my-10 ">
       <h2 className="font-bold text-2xl ">
@@ -35,6 +51,7 @@ function EditListing() {
         }}
         onSubmit={(values) => {
           console.log(values);
+          onSubmitHandler(values);
         }}
       >
         {({ values, handleChange, handleSubmit }) => (
