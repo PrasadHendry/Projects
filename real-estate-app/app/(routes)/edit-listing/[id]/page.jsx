@@ -13,21 +13,36 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Formik } from "formik";
 import { Button } from "@/components/ui/button";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/Utils/supabase/client";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
+import { useUser } from "@clerk/clerk-react";
 
-function EditListing() {
-  const params = usePathname();
+function EditListing({ params }) {
+  const { user } = useUser();
+  const router = useRouter();
+
   useEffect(() => {
-    console.log(params.split("/")[2]);
-  }, []);
+    //console.log(params.split("/")[2]);
+    user && verifyUserRecord();
+  }, [user]);
 
+  const verifyUserRecord = async () => {
+    const { data, error } = await supabase
+      .from("listing")
+      .select("*")
+      .eq("createdBy", user?.primaryEmailAddress.emailAddress)
+      .eq("id", params.id);
+
+    if (data?.length <= 0) {
+      router.replace("/");
+    }
+  };
   const onSubmitHandler = async (formValue) => {
     const { data, error } = await supabase
       .from("listing")
       .update(formValue)
-      .eq("id", params.split("/")[2])
+      .eq("id", params.id)
       .select();
 
     if (data) {
