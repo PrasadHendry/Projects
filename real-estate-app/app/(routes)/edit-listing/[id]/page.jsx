@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -17,10 +17,15 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/Utils/supabase/client";
 import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
+import FileUpload from "../_components/fileUpload";
+import { Loader } from "lucide-react";
 
 function EditListing({ params }) {
   const { user } = useUser();
   const router = useRouter();
+  const [listing, setListing] = useState([]);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     //console.log(params.split("/")[2]);
@@ -30,16 +35,21 @@ function EditListing({ params }) {
   const verifyUserRecord = async () => {
     const { data, error } = await supabase
       .from("listing")
-      .select("*")
+      .select("*,listingImages(listing_id,url)")
       .eq("createdBy", user?.primaryEmailAddress.emailAddress)
       .eq("id", params.id);
 
+    if (data) {
+      console.log(data);
+      setListing(data[0]);
+    }
     if (data?.length <= 0) {
       router.replace("/");
     }
   };
   const onSubmitHandler = async (formValue) => {
-    const { data, error } = await supabase
+    setLoading(true);
+    /*const { data, error } = await supabase
       .from("listing")
       .update(formValue)
       .eq("id", params.id)
@@ -48,9 +58,35 @@ function EditListing({ params }) {
     if (data) {
       console.log(data);
       toast("Listing Updated and Published");
-    } else if (error) {
-      console.error(error);
-      toast("Error occurred while updating listing");
+    }*/
+
+    for (const image of images) {
+      const file = image;
+      const fileName = Date.now().toString();
+      const fileExt = fileName.split(".").pop();
+
+      const { data, error } = await supabase.storage
+        .from("listingImages")
+        .upload(`${fileName}`, file, {
+          contentType: `image/${fileExt}`,
+          upsert: false,
+        });
+      if (error) {
+        setLoading(false);
+        toast("Error while uploading images");
+      } else {
+        // Perform any additional actions after successful upload
+        const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL + fileName;
+        const { data, error } = await supabase
+          .from("listingImages")
+          .insert([{ url: imageUrl, listing_id: params?.id }])
+          .select();
+
+        if (error) {
+          setLoading(false);
+        }
+      }
+      setLoading(false);
     }
   };
 
@@ -61,8 +97,8 @@ function EditListing({ params }) {
       </h2>
       <Formik
         initialValues={{
-          type: "",
-          propertyType: "",
+          profileImage: user?.imageUrl,
+          fullName: user?.fullName,
         }}
         onSubmit={(values) => {
           console.log(values);
@@ -77,7 +113,7 @@ function EditListing({ params }) {
                   <div className="flex flex-col gap-2">
                     <h2 className="text-lg text-slate-500">Rent OR Sell?</h2>
                     <RadioGroup
-                      defaultValue="Sell"
+                      defaultValue={listing?.type}
                       onValueChange={(v) => (values.type = v)}
                     >
                       <div className="flex items-center space-x-2">
@@ -97,11 +133,18 @@ function EditListing({ params }) {
                   <div className="flex gap-2 flex-col">
                     <h2 className="text-lg text-slate-500">Property Type:</h2>
                     <Select
-                      onValueChange={(e) => (values.propertyType = e)}
                       name="propertyType"
+                      defaultValue={listing?.propertyType}
+                      onValueChange={(e) => (values.propertyType = e)}
                     >
                       <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select Property Type" />
+                        <SelectValue
+                          placeholder={
+                            listing?.propertyType
+                              ? listing?.propertyType
+                              : "Select Property Type"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Single Family House">
@@ -119,6 +162,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.2"
+                      defaultValue={listing?.bedroom}
                       name="bedroom"
                       onChange={handleChange}
                     />
@@ -128,6 +172,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.2"
+                      defaultValue={listing?.bathroom}
                       name="bathroom"
                       onChange={handleChange}
                     />
@@ -137,6 +182,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.1900 Sq.ft"
+                      defaultValue={listing?.builtIn}
                       name="builtIn"
                       onChange={handleChange}
                     />
@@ -148,6 +194,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.2"
+                      defaultValue={listing?.parking}
                       name="parking"
                       onChange={handleChange}
                     />
@@ -157,6 +204,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.400"
+                      defaultValue={listing?.lotSize}
                       name="lotSize"
                       onChange={handleChange}
                     />
@@ -166,6 +214,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.1900"
+                      defaultValue={listing?.area}
                       name="area"
                       onChange={handleChange}
                     />
@@ -177,6 +226,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.400000"
+                      defaultValue={listing?.sellingPrice}
                       name="sellingPrice"
                       onChange={handleChange}
                     />
@@ -186,6 +236,7 @@ function EditListing({ params }) {
                     <Input
                       type="number"
                       placeholder="Ex.100"
+                      defaultValue={listing?.hoa}
                       name="hoa"
                       onChange={handleChange}
                     />
@@ -197,9 +248,19 @@ function EditListing({ params }) {
                     <Textarea
                       placeholder=""
                       name="description"
+                      defaultValue={listing?.description}
                       onChange={handleChange}
                     />
                   </div>
+                </div>
+                <div>
+                  <h2 className="font-lg text-gray-500 my-2">
+                    Upload Property Images:
+                  </h2>
+                  <FileUpload
+                    setImages={(value) => setImages(value)}
+                    imageList={listing.listingImages}
+                  />
                 </div>
                 <div className="flex gap-7 justify-end">
                   <Button
@@ -208,8 +269,15 @@ function EditListing({ params }) {
                   >
                     Save
                   </Button>
-                  <Button className="flex gap-2 items-center">
-                    Save & Publish
+                  <Button
+                    disabled={loading}
+                    className="flex gap-2 items-center"
+                  >
+                    {loading ? (
+                      <Loader className="anime-spin" />
+                    ) : (
+                      "Save & Publish"
+                    )}
                   </Button>
                 </div>
               </div>

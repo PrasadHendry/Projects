@@ -4,6 +4,7 @@ import GoogleAddressSearch from "@/app/_components/GoogleAddressSearch";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/clerk-react";
 import { Loader } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +14,7 @@ function AddNewListing() {
   const [coordinates, setCoordinates] = useState(null);
   const { user } = useUser();
   const [loader, setLoader] = useState(false);
+  const router = useRouter();
   // Handler function for the Next button
   const nextHandler = async () => {
     // Log selectedAddress and coordinates to console
@@ -34,7 +36,9 @@ function AddNewListing() {
       setLoader(false);
       console.log("New Data Added", data);
       toast("New Address Data Added for Listing");
+      router.replace("/edit-listing/" + data[0].id);
     }
+    1;
     if (error) {
       setLoader(false);
       console.log("Error");
