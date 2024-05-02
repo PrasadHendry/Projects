@@ -19,6 +19,17 @@ import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
 import FileUpload from "../_components/fileUpload";
 import { Loader } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function EditListing({ params }) {
   const { user } = useUser();
@@ -49,7 +60,7 @@ function EditListing({ params }) {
   };
   const onSubmitHandler = async (formValue) => {
     setLoading(true);
-    /*const { data, error } = await supabase
+    const { data, error } = await supabase
       .from("listing")
       .update(formValue)
       .eq("id", params.id)
@@ -58,9 +69,11 @@ function EditListing({ params }) {
     if (data) {
       console.log(data);
       toast("Listing Updated and Published");
-    }*/
+      setLoading(false);
+    }
 
     for (const image of images) {
+      setLoading(true);
       const file = image;
       const fileName = Date.now().toString();
       const fileExt = fileName.split(".").pop();
@@ -82,11 +95,28 @@ function EditListing({ params }) {
           .insert([{ url: imageUrl, listing_id: params?.id }])
           .select();
 
+        if (data) {
+          setLoading(false);
+        }
+
         if (error) {
           setLoading(false);
         }
       }
       setLoading(false);
+    }
+  };
+
+  const publishBtnHandler = async () => {
+    const { data, error } = await supabase
+      .from("listing")
+      .update({ active: true })
+      .eq("id", params?.id)
+      .select();
+
+    if (data) {
+      setLoading(false);
+      toast("Listing Published");
     }
   };
 
@@ -264,21 +294,45 @@ function EditListing({ params }) {
                 </div>
                 <div className="flex gap-7 justify-end">
                   <Button
+                    disabled={loading}
                     variant="outline"
                     className="text-primary border-primary"
                   >
-                    Save
+                    {loading ? <Loader className="anime-spin" /> : "Save"}
                   </Button>
-                  <Button
-                    disabled={loading}
-                    className="flex gap-2 items-center"
-                  >
-                    {loading ? (
-                      <Loader className="anime-spin" />
-                    ) : (
-                      "Save & Publish"
-                    )}
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        disabled={loading}
+                        className="flex gap-2 items-center"
+                      >
+                        {loading ? (
+                          <Loader className="anime-spin" />
+                        ) : (
+                          "Save & Publish"
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Ready to Publish?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Do you really want to Publish the Listing?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => publishBtnHandler()}>
+                          {loading ? (
+                            <Loader className="anime-spin" />
+                          ) : (
+                            "Continue"
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </div>
