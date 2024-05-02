@@ -72,10 +72,11 @@ function ListingMapView({ type }) {
           setCoordinates={setCoordinates}
         />
       </div>
-      <div className="fixed right-10 h-full md:w-[350px] lg:w-[450px] xl:[650px]">
-        <GoogleMapSection coordinates={coordinates} />
+      <div>
+        <GoogleMapSection listing={listing} coordinates={coordinates} />
       </div>
     </div>
+    //      <div className="fixed mt-10 right-1 h-full md:w-[350px] lg:w-[450px] xl:w-[650px]">
   );
 }
 
