@@ -58,7 +58,7 @@ function Listing({
                     className="rounded-lg object-cover h-[170px]"
                   />
                   <div className="flex mt-2 flex-col gap-2">
-                    <h2 className="font-bold text-xl">${item.price}</h2>
+                    <h2 className="font-bold text-xl"> ₹{item.price}</h2>
 
                     <h2 className="flex gap-2 text-sm text-gray-400">
                       <MapPin className="h-10 w-10 text-primary" />
